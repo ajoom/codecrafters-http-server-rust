@@ -1,26 +1,16 @@
 #[allow(unused_imports)]
 use std::net::TcpListener;
-use std::{
-    io::{BufRead, BufReader, Write},
-    net::TcpStream,
-};
+use std::{io::Write, net::TcpStream};
+mod http_request;
 mod http_response;
+use crate::http_request::HttpRequest;
 use crate::http_response::construct_http_response;
 use crate::http_response::ResponseStatus;
 
 fn handle_connection(mut stream: TcpStream) {
-    let reader = BufReader::new(&stream);
-    let request = reader
-        .lines() // gives an iterator over each line in the request, then read the first line
-        .next() // grap the first line
-        .unwrap()
-        .unwrap();
+    let request = HttpRequest::from_stream(&mut stream);
+    let path = request.path;
 
-    // e.g: GET /index.html HTTP/1.1
-    let parts: Vec<&str> = request.split_whitespace().collect();
-    let _method = parts[0];
-    let path = parts[1];
-    let _http_version = parts[2];
     let response_string;
 
     if path == "/" {
@@ -42,6 +32,16 @@ fn handle_connection(mut stream: TcpStream) {
         } else {
             response_string = construct_http_response(ResponseStatus::NotFoundResponse, &[], None);
         }
+    } else if path == "/user-agent" {
+        let body = request
+            .headers
+            .iter()
+            .find(|(key, _)| key == "User-Agent")
+            .map(|(_, value)| value)
+            .unwrap();
+
+        response_string =
+            construct_http_response(ResponseStatus::SuccessfulResponse, &[], Some(&body));
     } else {
         response_string = construct_http_response(ResponseStatus::NotFoundResponse, &[], None);
     }
