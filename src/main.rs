@@ -25,7 +25,7 @@ fn handle_connection(mut stream: TcpStream) {
     const NOT_FOUND_RESPONSE: &str = "HTTP/1.1 404 Not Found\r\n\r\n";
 
     match path {
-        "/index.html" => stream.write_all(SUCCESSFUL_RESPONSE.as_bytes()).unwrap(),
+        "/" => stream.write_all(SUCCESSFUL_RESPONSE.as_bytes()).unwrap(),
         _ => stream.write_all(NOT_FOUND_RESPONSE.as_bytes()).unwrap(),
     }
 }
