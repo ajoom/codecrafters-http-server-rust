@@ -40,8 +40,14 @@ fn handle_connection(mut stream: TcpStream) {
             .map(|(_, value)| value)
             .unwrap();
 
-        response_string =
-            construct_http_response(ResponseStatus::SuccessfulResponse, &[], Some(&body));
+        response_string = construct_http_response(
+            ResponseStatus::SuccessfulResponse,
+            &[
+                ("Content-Type", "text/plain"),
+                ("Content-Length", &body.bytes().len().to_string()),
+            ],
+            Some(&body),
+        );
     } else {
         response_string = construct_http_response(ResponseStatus::NotFoundResponse, &[], None);
     }
