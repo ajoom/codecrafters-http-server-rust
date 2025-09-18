@@ -4,6 +4,9 @@ use std::{
     io::{BufRead, BufReader, Write},
     net::TcpStream,
 };
+mod http_response;
+use crate::http_response::construct_http_response;
+use crate::http_response::ResponseStatus;
 
 fn handle_connection(mut stream: TcpStream) {
     let reader = BufReader::new(&stream);
@@ -18,16 +21,32 @@ fn handle_connection(mut stream: TcpStream) {
     let _method = parts[0];
     let path = parts[1];
     let _http_version = parts[2];
+    let response_string;
 
-    println!("parts are {:?}", parts);
+    if path == "/" {
+        response_string = construct_http_response(ResponseStatus::SuccessfulResponse, &[], None);
+    } else if path.starts_with("/echo") {
+        let parts: Vec<&str> = path.split('/').collect();
 
-    const SUCCESSFUL_RESPONSE: &str = "HTTP/1.1 200 OK\r\n\r\n";
-    const NOT_FOUND_RESPONSE: &str = "HTTP/1.1 404 Not Found\r\n\r\n";
+        if parts.len() == 3 {
+            let body = parts[2];
 
-    match path {
-        "/" => stream.write_all(SUCCESSFUL_RESPONSE.as_bytes()).unwrap(),
-        _ => stream.write_all(NOT_FOUND_RESPONSE.as_bytes()).unwrap(),
+            response_string = construct_http_response(
+                ResponseStatus::SuccessfulResponse,
+                &[
+                    ("Content-Type", "text/plain"),
+                    ("Content-Length", &body.bytes().len().to_string()),
+                ],
+                Some(body),
+            );
+        } else {
+            response_string = construct_http_response(ResponseStatus::NotFoundResponse, &[], None);
+        }
+    } else {
+        response_string = construct_http_response(ResponseStatus::NotFoundResponse, &[], None);
     }
+
+    stream.write_all(response_string.as_bytes()).unwrap();
 }
 
 fn main() {
@@ -36,6 +55,7 @@ fn main() {
 
     let listener = TcpListener::bind("127.0.0.1:4221").unwrap();
     // send custom http requests and debug locally. Eg: curl -i -X GET http://localhost:4221/index.html
+    // curl -i -X GET http://localhost:4221/echo/ahmad
 
     for stream in listener.incoming() {
         match stream {
