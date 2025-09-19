@@ -38,12 +38,7 @@ fn handle_connection(mut stream: TcpStream) {
     } else if path.starts_with("/files/") {
         response_string = handle_file_request(request);
     } else if path == "/user-agent" {
-        let body = request
-            .headers
-            .iter()
-            .find(|(key, _)| key == "User-Agent")
-            .map(|(_, value)| value)
-            .unwrap();
+        let body = request.headers.get("User-Agent").unwrap();
 
         response_string = construct_http_response(
             ResponseStatus::SuccessfulResponse,

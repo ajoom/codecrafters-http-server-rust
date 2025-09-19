@@ -1,6 +1,5 @@
 use std::{
-    io::{BufRead, BufReader, Read},
-    net::TcpStream,
+    collections::HashMap, io::{BufRead, BufReader, Read}, net::TcpStream
 };
 
 pub enum RequestMethod {
@@ -25,7 +24,7 @@ pub struct HttpRequest {
     pub _http_version: String,
 
     // 2- headers:
-    pub headers: Vec<(String, String)>,
+    pub headers: HashMap<String, String>,
 
     // 3- optional body:
     pub body: Option<String>,
@@ -61,6 +60,7 @@ impl HttpRequest {
                 headers.push((key.trim().to_string(), value.trim().to_string()));
             }
         }
+        let headers: HashMap<String, String> = headers.into_iter().collect();
 
         // 3- Parse body
         let content_length = headers
