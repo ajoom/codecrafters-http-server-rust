@@ -6,7 +6,7 @@ mod compression_utils;
 mod files_util;
 mod http_request;
 mod http_response;
-use crate::compression_utils::GZ_encoding;
+use crate::compression_utils::gz_encoding;
 use crate::files_util::handle_file_request;
 use crate::http_request::{HttpRequest, VALID_COMPRESSION_METHODS};
 use crate::http_response::construct_http_response;
@@ -37,7 +37,7 @@ fn handle_connection(mut stream: TcpStream) {
                     .find(|method| VALID_COMPRESSION_METHODS.contains(&method));
 
                 if let Some(method) = valid_method {
-                    body = GZ_encoding(&body);
+                    body = gz_encoding(&body);
                     response_headers.push(("Content-Encoding", method));
                 }
             }
