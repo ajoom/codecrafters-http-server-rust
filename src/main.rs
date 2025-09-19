@@ -22,7 +22,9 @@ fn handle_connection(mut stream: TcpStream) {
             }
         };
 
-        handle_request(&mut stream, request);
+        if handle_request(&mut stream, request) {
+            break;
+        }
     }
 
     println!("FIRST CONNECTION HAS ENDED");
