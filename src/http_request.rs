@@ -63,9 +63,19 @@ impl HttpRequest {
         }
 
         // 3- Parse body
-        let mut body = String::new();
-        reader.read_to_string(&mut body).ok();
-        let body = if body.is_empty() { None } else { Some(body) };
+        let content_length = headers
+            .iter()
+            .find(|(k, _)| k.eq_ignore_ascii_case("Content-Length"))
+            .map(|(_, v)| v.parse::<usize>().unwrap())
+            .unwrap_or(0);
+
+        let body = if content_length == 0 {
+            None
+        } else {
+            let mut body_bytes = vec![0u8; content_length];
+            reader.read_exact(&mut body_bytes).unwrap(); 
+            Some(String::from_utf8(body_bytes).unwrap())
+        };
 
         HttpRequest {
             method,
