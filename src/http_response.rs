@@ -1,6 +1,7 @@
 pub enum ResponseStatus {
     SuccessfulResponse,
     NotFoundResponse,
+    CreatedResponse,
 }
 
 pub fn construct_http_response(
@@ -12,6 +13,7 @@ pub fn construct_http_response(
     let status_line = match status {
         ResponseStatus::SuccessfulResponse => "HTTP/1.1 200 OK",
         ResponseStatus::NotFoundResponse => "HTTP/1.1 404 Not Found",
+        ResponseStatus::CreatedResponse => "HTTP/1.1 201 Created",
     };
     let mut response = format!("{}\r\n", status_line);
 

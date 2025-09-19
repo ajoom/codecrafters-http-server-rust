@@ -1,17 +1,18 @@
 #[allow(unused_imports)]
 use std::net::TcpListener;
-use std::path::Path;
 use std::thread;
 use std::{io::Write, net::TcpStream};
+mod files_util;
 mod http_request;
 mod http_response;
+use crate::files_util::handle_file_request;
 use crate::http_request::HttpRequest;
 use crate::http_response::construct_http_response;
 use crate::http_response::ResponseStatus;
 
 fn handle_connection(mut stream: TcpStream) {
     let request = HttpRequest::from_stream(&mut stream);
-    let path = request.path;
+    let path = request.path.clone();
 
     let response_string;
 
@@ -35,27 +36,7 @@ fn handle_connection(mut stream: TcpStream) {
             response_string = construct_http_response(ResponseStatus::NotFoundResponse, &[], None);
         }
     } else if path.starts_with("/files/") {
-        let filename = &path["/files/".len()..];
-        let directory = std::env::args()
-            .skip_while(|arg| arg != "--directory")
-            .nth(1)
-            .expect("Please provide --directory <path>");
-
-        let full_path = Path::new(&directory).join(filename);
-
-        if full_path.exists() && full_path.is_file() {
-            let contents = std::fs::read(&full_path).unwrap(); // read as bytes
-            response_string = construct_http_response(
-                ResponseStatus::SuccessfulResponse,
-                &[
-                    ("Content-Type", "application/octet-stream"),
-                    ("Content-Length", &contents.len().to_string()),
-                ],
-                Some(std::str::from_utf8(&contents).unwrap()), // or send bytes directly
-            );
-        } else {
-            response_string = construct_http_response(ResponseStatus::NotFoundResponse, &[], None);
-        }
+        response_string = handle_file_request(request);
     } else if path == "/user-agent" {
         let body = request
             .headers

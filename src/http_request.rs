@@ -1,5 +1,5 @@
 use std::{
-    io::{BufRead, BufReader},
+    io::{BufRead, BufReader, Read},
     net::TcpStream,
 };
 
@@ -20,7 +20,7 @@ impl RequestMethod {
 
 pub struct HttpRequest {
     // 1- request line:
-    pub _method: RequestMethod,
+    pub method: RequestMethod,
     pub path: String,
     pub _http_version: String,
 
@@ -28,17 +28,17 @@ pub struct HttpRequest {
     pub headers: Vec<(String, String)>,
 
     // 3- optional body:
-    pub _body: Option<String>,
+    pub body: Option<String>,
 }
 
 impl HttpRequest {
     pub fn from_stream(stream: &mut TcpStream) -> Self {
-        let reader = BufReader::new(stream);
-        let mut lines_iter = reader.lines();
+        let mut reader = BufReader::new(stream);
 
         // 1- Parse request line
-        let request_line = lines_iter.next().unwrap().unwrap();
-        let parts: Vec<&str> = request_line.split_whitespace().collect();
+        let mut request_line = String::new();
+        reader.read_line(&mut request_line).unwrap();
+        let parts: Vec<&str> = request_line.trim_end().split_whitespace().collect();
 
         if parts.len() != 3 {
             panic!("Non-valid request line");
@@ -50,9 +50,10 @@ impl HttpRequest {
 
         // 2- Parse headers
         let mut headers = Vec::new();
-        for line in lines_iter.by_ref() {
-            let line = line.ok().unwrap();
-
+        loop {
+            let mut line = String::new();
+            reader.read_line(&mut line).unwrap();
+            let line = line.trim_end();
             if line.is_empty() {
                 break; // empty line marks end of headers
             }
@@ -61,12 +62,17 @@ impl HttpRequest {
             }
         }
 
+        // 3- Parse body
+        let mut body = String::new();
+        reader.read_to_string(&mut body).ok();
+        let body = if body.is_empty() { None } else { Some(body) };
+
         HttpRequest {
-            _method: method,
+            method,
             path,
             _http_version: http_version,
             headers,
-            _body: None, // TODO next
+            body,
         }
     }
 }
