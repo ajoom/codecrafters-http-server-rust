@@ -1,5 +1,6 @@
 #[allow(unused_imports)]
 use std::net::TcpListener;
+use std::path::Path;
 use std::thread;
 use std::{io::Write, net::TcpStream};
 mod http_request;
@@ -29,6 +30,28 @@ fn handle_connection(mut stream: TcpStream) {
                     ("Content-Length", &body.bytes().len().to_string()),
                 ],
                 Some(body),
+            );
+        } else {
+            response_string = construct_http_response(ResponseStatus::NotFoundResponse, &[], None);
+        }
+    } else if path.starts_with("/files/") {
+        let filename = &path["/files/".len()..];
+        let directory = std::env::args()
+            .skip_while(|arg| arg != "--directory")
+            .nth(1)
+            .expect("Please provide --directory <path>");
+
+        let full_path = Path::new(&directory).join(filename);
+
+        if full_path.exists() && full_path.is_file() {
+            let contents = std::fs::read(&full_path).unwrap(); // read as bytes
+            response_string = construct_http_response(
+                ResponseStatus::SuccessfulResponse,
+                &[
+                    ("Content-Type", "application/octet-stream"),
+                    ("Content-Length", &contents.len().to_string()),
+                ],
+                Some(std::str::from_utf8(&contents).unwrap()), // or send bytes directly
             );
         } else {
             response_string = construct_http_response(ResponseStatus::NotFoundResponse, &[], None);
@@ -68,7 +91,7 @@ fn main() {
         match stream {
             Ok(stream) => {
                 // create a thread for each connection
-               thread::spawn(|| handle_connection(stream));
+                thread::spawn(|| handle_connection(stream));
             }
             Err(e) => {
                 println!("error: {}", e);
