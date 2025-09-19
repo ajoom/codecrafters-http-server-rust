@@ -67,6 +67,7 @@ fn main() {
     for stream in listener.incoming() {
         match stream {
             Ok(stream) => {
+                // create a thread for each connection
                thread::spawn(|| handle_connection(stream));
             }
             Err(e) => {
