@@ -20,6 +20,7 @@ impl RequestMethod {
     }
 }
 
+
 pub struct HttpRequest {
     // 1- request line:
     pub method: RequestMethod,

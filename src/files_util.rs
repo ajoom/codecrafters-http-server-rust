@@ -5,7 +5,7 @@ use crate::{
     http_response::{construct_http_response, ResponseStatus},
 };
 
-pub fn handle_file_request(request: HttpRequest) -> Vec<u8> {
+pub fn handle_file_request(request: &HttpRequest) -> Vec<u8> {
     let filename = &request.path["/files/".len()..];
     let directory = std::env::args()
         .skip_while(|arg| arg != "--directory")
@@ -33,7 +33,7 @@ pub fn handle_file_request(request: HttpRequest) -> Vec<u8> {
         }
 
         RequestMethod::POST => {
-            let body = request.body.unwrap();
+            let body = request.body.clone().unwrap();
 
             match std::fs::write(&full_path, body) {
                 Ok(_) => {
