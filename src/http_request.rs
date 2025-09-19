@@ -1,5 +1,8 @@
+use std::io::ErrorKind::InvalidData;
 use std::{
-    collections::HashMap, io::{BufRead, BufReader, Read}, net::TcpStream
+    collections::HashMap,
+    io::{BufRead, BufReader, Error, Read},
+    net::TcpStream,
 };
 
 pub enum RequestMethod {
@@ -32,9 +35,8 @@ pub struct HttpRequest {
 
 pub const VALID_COMPRESSION_METHODS: [&str; 1] = ["gzip"];
 
-
 impl HttpRequest {
-    pub fn from_stream(stream: &mut TcpStream) -> Self {
+    pub fn from_stream(stream: &mut TcpStream) -> Result<HttpRequest, Error> {
         let mut reader = BufReader::new(stream);
 
         // 1- Parse request line
@@ -43,7 +45,10 @@ impl HttpRequest {
         let parts: Vec<&str> = request_line.trim_end().split_whitespace().collect();
 
         if parts.len() != 3 {
-            panic!("Non-valid request line");
+            return Err(Error::new(
+                InvalidData,
+                format!("Invalid request line: {:?}", parts),
+            ));
         }
 
         let method = RequestMethod::from_str(parts[0]);
@@ -76,16 +81,16 @@ impl HttpRequest {
             None
         } else {
             let mut body_bytes = vec![0u8; content_length];
-            reader.read_exact(&mut body_bytes).unwrap(); 
+            reader.read_exact(&mut body_bytes).unwrap();
             Some(String::from_utf8(body_bytes).unwrap())
         };
 
-        HttpRequest {
+        Ok(HttpRequest {
             method,
             path,
             _http_version: http_version,
             headers,
             body,
-        }
+        })
     }
 }
