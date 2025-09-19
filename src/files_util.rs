@@ -5,7 +5,7 @@ use crate::{
     http_response::{construct_http_response, ResponseStatus},
 };
 
-pub fn handle_file_request(request: HttpRequest) -> String {
+pub fn handle_file_request(request: HttpRequest) -> Vec<u8> {
     let filename = &request.path["/files/".len()..];
     let directory = std::env::args()
         .skip_while(|arg| arg != "--directory")
@@ -21,20 +21,20 @@ pub fn handle_file_request(request: HttpRequest) -> String {
                 return construct_http_response(ResponseStatus::NotFoundResponse, &[], None);
             }
 
-            let contents = std::fs::read(&full_path).unwrap(); // read as bytes
+            let contents = std::fs::read(&full_path).unwrap();
             return construct_http_response(
                 ResponseStatus::SuccessfulResponse,
                 &[
                     ("Content-Type", "application/octet-stream"),
                     ("Content-Length", &contents.len().to_string()),
                 ],
-                Some(std::str::from_utf8(&contents).unwrap()), // or send bytes directly
+                Some(&contents),
             );
         }
 
         RequestMethod::POST => {
             let body = request.body.unwrap();
-            
+
             match std::fs::write(&full_path, body) {
                 Ok(_) => {
                     // 3- Return 201 Created

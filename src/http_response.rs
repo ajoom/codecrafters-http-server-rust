@@ -7,8 +7,8 @@ pub enum ResponseStatus {
 pub fn construct_http_response(
     status: ResponseStatus,
     headers: &[(&str, &str)], // slice of key-value header pairs
-    body: Option<&str>,
-) -> String {
+    body: Option<&[u8]>,
+) -> Vec<u8> {
     // Add status line
     let status_line = match status {
         ResponseStatus::SuccessfulResponse => "HTTP/1.1 200 OK",
@@ -24,9 +24,10 @@ pub fn construct_http_response(
     response.push_str("\r\n");
 
     // Add the body
+    let mut response_bytes = response.into_bytes();
     if let Some(body) = body {
-        response.push_str(body);
+        response_bytes.extend_from_slice(body);
     }
 
-    response
+    response_bytes
 }
