@@ -28,9 +28,12 @@ fn handle_connection(mut stream: TcpStream) {
                 ("Content-Type", "text/plain"),
                 ("Content-Length", &content_length),
             ];
-            if let Some(compression_method) = request.headers.get("Accept-Encoding") {
-                if VALID_COMPRESSION_METHODS.contains(&compression_method.as_str()) {
-                    response_headers.push(("Content-Encoding", compression_method.as_str()));
+            if let Some(accepted_encoding_methods_string) = request.headers.get("Accept-Encoding") {
+                let accepted_encoding_methods: Vec<&str> = accepted_encoding_methods_string.split(',').map(|s| s.trim()).collect();
+                let valid_method = accepted_encoding_methods.iter().find(|method| VALID_COMPRESSION_METHODS.contains(&method));
+
+                if let Some(method) = valid_method {
+                    response_headers.push(("Content-Encoding", method));
                 }
             }
 
