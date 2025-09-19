@@ -1,5 +1,6 @@
 #[allow(unused_imports)]
 use std::net::TcpListener;
+use std::thread;
 use std::{io::Write, net::TcpStream};
 mod http_request;
 mod http_response;
@@ -66,7 +67,7 @@ fn main() {
     for stream in listener.incoming() {
         match stream {
             Ok(stream) => {
-                handle_connection(stream);
+               thread::spawn(|| handle_connection(stream));
             }
             Err(e) => {
                 println!("error: {}", e);
