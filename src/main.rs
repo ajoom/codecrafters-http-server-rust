@@ -22,6 +22,12 @@ fn handle_connection(mut stream: TcpStream) {
             }
         };
 
+        if let Some(connection_header) = request.headers.get("Connection") {
+            if connection_header == "close" {
+                break;
+            }
+        }
+
         handle_request(&mut stream, request);
     }
 
