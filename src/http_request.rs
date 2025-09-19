@@ -30,6 +30,9 @@ pub struct HttpRequest {
     pub body: Option<String>,
 }
 
+pub const VALID_COMPRESSION_METHODS: [&str; 1] = ["gzip"];
+
+
 impl HttpRequest {
     pub fn from_stream(stream: &mut TcpStream) -> Self {
         let mut reader = BufReader::new(stream);

@@ -6,7 +6,7 @@ mod files_util;
 mod http_request;
 mod http_response;
 use crate::files_util::handle_file_request;
-use crate::http_request::HttpRequest;
+use crate::http_request::{HttpRequest, VALID_COMPRESSION_METHODS};
 use crate::http_response::construct_http_response;
 use crate::http_response::ResponseStatus;
 
@@ -23,13 +23,20 @@ fn handle_connection(mut stream: TcpStream) {
 
         if parts.len() == 3 {
             let body = parts[2];
+            let content_length = body.bytes().len().to_string();
+            let mut response_headers: Vec<(&str, &str)> = vec![
+                ("Content-Type", "text/plain"),
+                ("Content-Length", &content_length),
+            ];
+            if let Some(compression_method) = request.headers.get("Accept-Encoding") {
+                if VALID_COMPRESSION_METHODS.contains(&compression_method.as_str()) {
+                    response_headers.push(("Content-Encoding", compression_method.as_str()));
+                }
+            }
 
             response_string = construct_http_response(
                 ResponseStatus::SuccessfulResponse,
-                &[
-                    ("Content-Type", "text/plain"),
-                    ("Content-Length", &body.bytes().len().to_string()),
-                ],
+                &response_headers,
                 Some(body),
             );
         } else {
